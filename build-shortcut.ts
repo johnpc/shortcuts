@@ -31,10 +31,12 @@ async function loadShortcuts(): Promise<ShortcutDefinition[]> {
   const shortcuts: ShortcutDefinition[] = [];
   for (const file of files) {
     const module = await import(path.join(shortcutsDir, file));
-    const exportedShortcuts = Object.values(module).filter(
-      (exp): exp is ShortcutDefinition => typeof exp === 'object' && exp !== null && 'data' in exp
+    const exportedFunctions = Object.values(module).filter(
+      (exp): exp is () => Promise<ShortcutDefinition> => typeof exp === 'function'
     );
-    shortcuts.push(...exportedShortcuts);
+    for (const fn of exportedFunctions) {
+      shortcuts.push(await fn());
+    }
   }
 
   return shortcuts;
