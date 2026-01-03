@@ -1,0 +1,18 @@
+# Compiled shortcuts
+*.shortcut
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Build artifacts
+dist/
+build/

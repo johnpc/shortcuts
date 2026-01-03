@@ -1,0 +1,37 @@
+{
+  "name": "shortcuts",
+  "version": "1.0.0",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.962.0",
+    "@joshfarrant/shortcuts-js": "^0.6.0",
+    "dotenv": "^17.2.3",
+    "plist": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/plist": "^3.0.5",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "npx tsx build-shortcut.ts",
+    "deploy": "npx tsx build-shortcut.ts --deploy",
+    "lint": "eslint . --ext .ts,.js --max-warnings 0",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
