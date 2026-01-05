@@ -18,6 +18,7 @@ const LIGHT_THEMES = [
   { name: 'Lights: Bright', action: 'all_bright' },
   { name: 'Lights: Max Brightness', action: 'set_brightness', brightness: 100 },
   { name: 'Lights: Dim', action: 'set_brightness', brightness: 30 },
+  { name: 'Lights: Very Dim', action: 'set_brightness', brightness: 1 },
 ];
 
 async function buildActionButton(): Promise<ShortcutDefinition> {
