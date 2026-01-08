@@ -1,19 +1,31 @@
 import { httpPostAction, menuCase } from './helpers';
+import type { LightTheme, ShortcutAction } from './types';
+import { CONFIG } from './config';
 
-const LIGHT_THEMES = [
+interface LightScript {
+  name: string;
+  scriptId: string;
+}
+
+const LIGHT_THEMES: readonly LightTheme[] = [
   { name: 'Lights: Off', action: 'all_off' },
+  { name: 'Lights: Warm White', action: 'all_bright' },
   { name: 'Lights: Max Brightness', action: 'set_brightness', brightness: 100 },
-  { name: 'Lights: Bright', action: 'all_bright' },
   { name: 'Lights: Dim', action: 'set_brightness', brightness: 30 },
   { name: 'Lights: Very Dim', action: 'set_brightness', brightness: 1 },
-  { name: 'Lights: Random', action: 'all_random' },
   { name: 'Lights: Blue', action: 'all_blue' },
   { name: 'Lights: Red', action: 'all_red' },
-  { name: 'Govee Lights: Off', action: 'govee_off' },
-  { name: 'Movie Mode', action: 'movie_mode' },
-];
+  { name: 'Lights: Random', action: 'all_random' },
+] as const;
 
-export function lightsSubmenu(mainGroupingId: string, lightsGroupingId: string) {
+const LIGHT_SCRIPTS: readonly LightScript[] = [
+  { name: 'Govee Lights Off', scriptId: 'govee_lights_off' },
+  { name: 'Movie Mode', scriptId: 'movie_mode' },
+] as const;
+
+export function lightsSubmenu(mainGroupingId: string, lightsGroupingId: string): ShortcutAction[] {
+  const allLightItems = [...LIGHT_THEMES.map((t) => t.name), ...LIGHT_SCRIPTS.map((s) => s.name)];
+
   return [
     // Open lights submenu
     menuCase('Lights', mainGroupingId),
@@ -22,21 +34,23 @@ export function lightsSubmenu(mainGroupingId: string, lightsGroupingId: string) 
       WFWorkflowActionParameters: {
         WFMenuPrompt: 'Lights',
         WFControlFlowMode: 0,
-        WFMenuItems: LIGHT_THEMES.map((t) => t.name),
+        WFMenuItems: allLightItems,
         GroupingIdentifier: lightsGroupingId,
       },
     },
-    // Light theme cases
+    // Light theme cases (API actions)
     ...LIGHT_THEMES.flatMap((theme) => {
       const body: Record<string, string | number> = { action: theme.action };
       if (theme.brightness !== undefined) {
         body.brightness = theme.brightness;
       }
-      return [
-        menuCase(theme.name, lightsGroupingId),
-        httpPostAction('https://homie.jpc.io/api/lights', body),
-      ];
+      return [menuCase(theme.name, lightsGroupingId), httpPostAction(CONFIG.LIGHTS_API_URL, body)];
     }),
+    // Light script cases (Home Assistant scripts)
+    ...LIGHT_SCRIPTS.flatMap((script) => [
+      menuCase(script.name, lightsGroupingId),
+      httpPostAction(process.env.HOME_ASSISTANT_API_URL!, { script: script.scriptId }),
+    ]),
     // Close lights submenu
     {
       WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',

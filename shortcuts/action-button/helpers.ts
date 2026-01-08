@@ -1,4 +1,6 @@
-export function httpPostAction(url: string, body: Record<string, string | number>) {
+import type { ShortcutAction } from './types';
+
+export function httpPostAction(url: string, body: Record<string, string | number>): ShortcutAction {
   return {
     WFWorkflowActionIdentifier: 'is.workflow.actions.downloadurl',
     WFWorkflowActionParameters: {
@@ -57,7 +59,7 @@ export function httpPostAction(url: string, body: Record<string, string | number
   };
 }
 
-export function menuCase(title: string, groupingId: string) {
+export function menuCase(title: string, groupingId: string): ShortcutAction {
   return {
     WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',
     WFWorkflowActionParameters: {

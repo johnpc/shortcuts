@@ -1,4 +1,6 @@
-export function cameraActions(groupingId: string) {
+import type { ShortcutAction } from './types';
+
+export function cameraActions(groupingId: string): ShortcutAction[] {
   return [
     {
       WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',
