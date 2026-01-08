@@ -1,4 +1,7 @@
 import type { ShortcutDefinition } from '../types/shortcut';
+import { cameraActions } from './action-button/camera';
+import { scriptActions } from './action-button/scripts';
+import { lightsSubmenu } from './action-button/lights';
 
 interface Script {
   name: string;
@@ -11,20 +14,33 @@ async function fetchScripts(): Promise<Script[]> {
   return data.scripts;
 }
 
-const LIGHT_THEMES = [
-  { name: 'Lights: Random', action: 'all_random' },
-  { name: 'Lights: Blue', action: 'all_blue' },
-  { name: 'Lights: Red', action: 'all_red' },
-  { name: 'Lights: Bright', action: 'all_bright' },
-  { name: 'Lights: Max Brightness', action: 'set_brightness', brightness: 100 },
-  { name: 'Lights: Dim', action: 'set_brightness', brightness: 30 },
-  { name: 'Lights: Very Dim', action: 'set_brightness', brightness: 1 },
-];
-
 async function buildActionButton(): Promise<ShortcutDefinition> {
   const scripts = await fetchScripts();
   const groupingId = 'action-button-menu';
-  const menuItems = ['Camera', ...scripts.map((s) => s.name), ...LIGHT_THEMES.map((t) => t.name)];
+  const lightsGroupingId = 'lights-submenu';
+
+  const scriptOrder = [
+    'Garage Close',
+    'Garage Open',
+    'Lock All Doors',
+    'Unlock All Doors',
+    'Heated Stairs On',
+    'Heated Stairs Off',
+  ];
+
+  const orderedScripts = scriptOrder
+    .map((name) => scripts.find((s) => s.name === name))
+    .filter((s): s is Script => s !== undefined);
+
+  const heatedStairsScripts = orderedScripts.filter((s) => s.name.startsWith('Heated Stairs'));
+  const mainScripts = orderedScripts.filter((s) => !s.name.startsWith('Heated Stairs'));
+
+  const menuItems = [
+    'Camera',
+    ...mainScripts.map((s) => s.name),
+    'Lights',
+    ...heatedStairsScripts.map((s) => s.name),
+  ];
 
   const actions = [
     // Menu start
@@ -37,180 +53,14 @@ async function buildActionButton(): Promise<ShortcutDefinition> {
         GroupingIdentifier: groupingId,
       },
     },
-    // Camera case
-    {
-      WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',
-      WFWorkflowActionParameters: {
-        WFMenuItemTitle: 'Camera',
-        GroupingIdentifier: groupingId,
-        WFControlFlowMode: 1,
-      },
-    },
-    {
-      WFWorkflowActionIdentifier: 'is.workflow.actions.openapp',
-      WFWorkflowActionParameters: {
-        WFAppIdentifier: 'com.apple.camera',
-      },
-    },
-    // Script cases
-    ...scripts.flatMap((script) => [
-      {
-        WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',
-        WFWorkflowActionParameters: {
-          WFMenuItemTitle: script.name,
-          GroupingIdentifier: groupingId,
-          WFControlFlowMode: 1,
-        },
-      },
-      {
-        WFWorkflowActionIdentifier: 'is.workflow.actions.downloadurl',
-        WFWorkflowActionParameters: {
-          WFURL: process.env.HOME_ASSISTANT_API_URL,
-          Advanced: true,
-          ShowHeaders: true,
-          WFHTTPMethod: 'POST',
-          WFHTTPBodyType: 'JSON',
-          WFHTTPHeaders: {
-            Value: {
-              WFDictionaryFieldValueItems: [
-                {
-                  WFItemType: 0,
-                  WFKey: {
-                    Value: {
-                      string: 'Content-Type',
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                  WFValue: {
-                    Value: {
-                      string: 'application/json',
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                },
-              ],
-            },
-            WFSerializationType: 'WFDictionaryFieldValue',
-          },
-          WFJSONValues: {
-            Value: {
-              WFDictionaryFieldValueItems: [
-                {
-                  WFItemType: 0,
-                  WFKey: {
-                    Value: {
-                      string: 'script',
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                  WFValue: {
-                    Value: {
-                      string: script.id,
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                },
-              ],
-            },
-            WFSerializationType: 'WFDictionaryFieldValue',
-          },
-        },
-      },
-    ]),
-    // Light theme cases
-    ...LIGHT_THEMES.flatMap((theme) => [
-      {
-        WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',
-        WFWorkflowActionParameters: {
-          WFMenuItemTitle: theme.name,
-          GroupingIdentifier: groupingId,
-          WFControlFlowMode: 1,
-        },
-      },
-      {
-        WFWorkflowActionIdentifier: 'is.workflow.actions.downloadurl',
-        WFWorkflowActionParameters: {
-          WFURL: 'https://homie.jpc.io/api/lights',
-          Advanced: true,
-          ShowHeaders: true,
-          WFHTTPMethod: 'POST',
-          WFHTTPBodyType: 'JSON',
-          WFHTTPHeaders: {
-            Value: {
-              WFDictionaryFieldValueItems: [
-                {
-                  WFItemType: 0,
-                  WFKey: {
-                    Value: {
-                      string: 'Content-Type',
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                  WFValue: {
-                    Value: {
-                      string: 'application/json',
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                },
-              ],
-            },
-            WFSerializationType: 'WFDictionaryFieldValue',
-          },
-          WFJSONValues: {
-            Value: {
-              WFDictionaryFieldValueItems: [
-                {
-                  WFItemType: 0,
-                  WFKey: {
-                    Value: {
-                      string: 'action',
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                  WFValue: {
-                    Value: {
-                      string: theme.action,
-                      attachmentsByRange: {},
-                    },
-                    WFSerializationType: 'WFTextTokenString',
-                  },
-                },
-                ...(theme.brightness !== undefined
-                  ? [
-                      {
-                        WFItemType: 0,
-                        WFKey: {
-                          Value: {
-                            string: 'brightness',
-                            attachmentsByRange: {},
-                          },
-                          WFSerializationType: 'WFTextTokenString',
-                        },
-                        WFValue: {
-                          Value: {
-                            string: theme.brightness.toString(),
-                            attachmentsByRange: {},
-                          },
-                          WFSerializationType: 'WFTextTokenString',
-                        },
-                      },
-                    ]
-                  : []),
-              ],
-            },
-            WFSerializationType: 'WFDictionaryFieldValue',
-          },
-        },
-      },
-    ]),
+    // Camera
+    ...cameraActions(groupingId),
+    // Main scripts (Garage, Lock/Unlock)
+    ...scriptActions(mainScripts, groupingId),
+    // Lights submenu
+    ...lightsSubmenu(groupingId, lightsGroupingId),
+    // Heated Stairs
+    ...scriptActions(heatedStairsScripts, groupingId),
     // Menu end
     {
       WFWorkflowActionIdentifier: 'is.workflow.actions.choosefrommenu',
