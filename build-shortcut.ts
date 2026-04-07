@@ -79,27 +79,14 @@ async function buildShortcut(shortcut: ShortcutDefinition): Promise<void> {
     const url = `${process.env.FILE_HOST_URL}/${uploadFilename}`;
     console.log(`✓ Deployed to: ${url}`);
 
-    // Send SMS notification if configured
-    if (process.env.TEXTBELT_API_KEY && process.env.TEXTBELT_PHONE) {
-      try {
-        const response = await fetch('https://textbelt.com/text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            phone: process.env.TEXTBELT_PHONE,
-            message: `${shortcut.name} deployed: ${url}`,
-            key: process.env.TEXTBELT_API_KEY,
-          }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          console.log('✓ SMS sent');
-        } else {
-          console.log(`⚠ SMS failed: ${result.error}`);
-        }
-      } catch (error) {
-        console.log(`⚠ SMS error: ${error}`);
-      }
+    // Send iMessage notification
+    try {
+      execSync(
+        `osascript -e 'tell application "Messages" to send "${url}" to buddy "${process.env.IMESSAGE_PHONE}"'`
+      );
+      console.log('✓ iMessage sent');
+    } catch (error) {
+      console.log(`⚠ iMessage error: ${error}`);
     }
 
     console.log('');

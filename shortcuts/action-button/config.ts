@@ -17,14 +17,18 @@ export const CONFIG = {
   get LIGHTS_API_URL() {
     return process.env.LIGHTS_API_URL!;
   },
+  get TESLA_API_URL() {
+    return process.env.TESLA_API_URL!;
+  },
 
   // Grouping IDs
   MAIN_MENU_ID: 'action-button-menu',
   LIGHTS_SUBMENU_ID: 'lights-submenu',
+  TESLA_SUBMENU_ID: 'tesla-submenu',
 } as const;
 
 // Validate required environment variables
-const requiredEnvVars = ['LIGHTS_API_URL'] as const;
+const requiredEnvVars = ['LIGHTS_API_URL', 'TESLA_API_URL'] as const;
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`Missing required environment variable: ${envVar}`);
