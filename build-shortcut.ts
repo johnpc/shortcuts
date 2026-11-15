@@ -81,9 +81,7 @@ async function buildShortcut(shortcut: ShortcutDefinition): Promise<void> {
 
     // Send iMessage notification
     try {
-      execSync(
-        `osascript -e 'tell application "Messages" to send "${url}" to buddy "${process.env.IMESSAGE_PHONE}"'`
-      );
+      await sendIMessage(url);
       console.log('✓ iMessage sent');
     } catch (error) {
       console.log(`⚠ iMessage error: ${error}`);
@@ -91,6 +89,35 @@ async function buildShortcut(shortcut: ShortcutDefinition): Promise<void> {
 
     console.log('');
   }
+}
+
+/**
+ * Texts the deploy URL. Prefers the BlueBubbles server (works from SSH/CI, where
+ * AppleScript silently drops messages); falls back to AppleScript when unset.
+ */
+async function sendIMessage(text: string): Promise<void> {
+  const phone = process.env.IMESSAGE_PHONE;
+  if (!phone) throw new Error('IMESSAGE_PHONE not set');
+  const base = process.env.BLUEBUBBLES_URL;
+  const password = process.env.BLUEBUBBLES_PASSWORD;
+  if (base && password) {
+    const res = await fetch(
+      `${base}/api/v1/message/text?password=${encodeURIComponent(password)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatGuid: `iMessage;-;${phone}`,
+          tempGuid: crypto.randomUUID(),
+          message: text,
+          method: 'apple-script',
+        }),
+      }
+    );
+    if (!res.ok) throw new Error(`BlueBubbles ${res.status}: ${await res.text()}`);
+    return;
+  }
+  execSync(`osascript -e 'tell application "Messages" to send "${text}" to buddy "${phone}"'`);
 }
 
 async function main() {
