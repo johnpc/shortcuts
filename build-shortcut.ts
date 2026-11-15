@@ -79,10 +79,15 @@ async function buildShortcut(shortcut: ShortcutDefinition): Promise<void> {
     const url = `${process.env.FILE_HOST_URL}/${uploadFilename}`;
     console.log(`✓ Deployed to: ${url}`);
 
-    // Send iMessage notification
+    // Send iMessage notification. Messages must be running (otherwise the
+    // AppleEvent times out) and the modern participant/account syntax is used.
     try {
+      execSync('open -a Messages && sleep 4');
       execSync(
-        `osascript -e 'tell application "Messages" to send "${url}" to buddy "${process.env.IMESSAGE_PHONE}"'`
+        `osascript -e 'tell application "Messages"' ` +
+          `-e 'set svc to 1st account whose service type = iMessage' ` +
+          `-e 'set who to participant "${process.env.IMESSAGE_PHONE}" of svc' ` +
+          `-e 'send "${url}" to who' -e 'end tell'`
       );
       console.log('✓ iMessage sent');
     } catch (error) {
