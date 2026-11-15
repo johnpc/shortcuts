@@ -115,9 +115,28 @@ async function sendIMessage(text: string): Promise<void> {
       }
     );
     if (!res.ok) throw new Error(`BlueBubbles ${res.status}: ${await res.text()}`);
+    await sendTextBeltPing(phone);
     return;
   }
   execSync(`osascript -e 'tell application "Messages" to send "${text}" to buddy "${phone}"'`);
+}
+
+/**
+ * The Mac mini's Messages is signed in as the recipient, so the iMessage lands
+ * silently in their self-thread. A plain SMS via TextBelt makes the phone buzz
+ * (no URL — unverified TextBelt keys cannot send links).
+ */
+async function sendTextBeltPing(phone: string): Promise<void> {
+  const key = process.env.TEXTBELT_API_KEY;
+  if (!key) return;
+  const body = new URLSearchParams({
+    phone,
+    message: 'New shortcut deployed - link is in your Messages thread with yourself.',
+    key,
+  });
+  const res = await fetch('https://textbelt.com/text', { method: 'POST', body });
+  const json = (await res.json()) as { success: boolean; error?: string };
+  if (!json.success) throw new Error(`TextBelt: ${json.error ?? 'unknown error'}`);
 }
 
 async function main() {
