@@ -3,6 +3,7 @@ import { cameraActions } from './action-button/camera';
 import { scriptActions } from './action-button/scripts';
 import { lightsSubmenu } from './action-button/lights';
 import { teslaSubmenu } from './action-button/tesla';
+import { peekActions } from './action-button/peek';
 import { ScriptName, type Script } from './action-button/types';
 import { CONFIG } from './action-button/config';
 
@@ -43,6 +44,7 @@ async function buildActionButton(): Promise<ShortcutDefinition> {
     ...mainScripts.map((s) => s.name),
     'Lights',
     'Tesla',
+    'Mac mini',
     ...heatedStairsScripts.map((s) => s.name),
   ];
 
@@ -65,6 +67,8 @@ async function buildActionButton(): Promise<ShortcutDefinition> {
     ...lightsSubmenu(CONFIG.MAIN_MENU_ID, CONFIG.LIGHTS_SUBMENU_ID),
     // Tesla submenu
     ...teslaSubmenu(CONFIG.MAIN_MENU_ID, CONFIG.TESLA_SUBMENU_ID),
+    // Mac mini (peek screen sharing)
+    ...peekActions(CONFIG.MAIN_MENU_ID),
     // Heated Stairs
     ...scriptActions(heatedStairsScripts, CONFIG.MAIN_MENU_ID),
     // Menu end
